@@ -17,9 +17,6 @@ interface ChatMessage {
 interface UserContext {
   user_location: string;
   user_weather: string;
-  user_time: string;
-  user_upcoming_events: string;
-  user_upcoming_reminders: string;
 }
 
 // Create a type for the session
@@ -56,14 +53,16 @@ const context = `
 For context you can use the following information:
 user_location: <user_location>
 user_weather: <user_weather>
-user_time: <user_time>
 `;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
-    const { sessionId, userMessage, rawUserContext } = req.body;
+    const { sessionId, userMessage, userLocation, userWeather } = req.body;
 
-    const userContext = JSON.parse(rawUserContext) as UserContext;
+    const userContext = {
+      user_location: userLocation,
+      user_weather: userWeather,
+    } as UserContext;
 
     if (typeof sessionId !== 'number' || typeof userMessage !== 'string' || typeof userContext !== 'object') {
       res.status(400).json({ error: 'Invalid request data' });
@@ -74,7 +73,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const filledContext = context
       .replace('<user_location>', userContext.user_location)
       .replace('<user_weather>', userContext.user_weather)
-      .replace('<user_time>', userContext.user_time);
 
     const session = findOrCreateSession(sessionId);
     if (session.messages.length === 0) {
